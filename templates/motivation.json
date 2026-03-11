@@ -1,0 +1,21 @@
+{
+    "category": "motivation",
+    "format": "shorts",
+    "resolution": "1080x1920",
+    "duration_range": [45, 90],
+    "subtitle_font_size": 52,
+    "subtitle_font_color": "white",
+    "subtitle_outline_color": "black",
+    "thumbnail_font_size": 80,
+    "thumbnail_font_color": "#FFD700",
+    "thumbnail_outline_color": "black",
+    "font_file": "",
+    "background_gradient": ["#1a1a2e", "#16213e", "#0f3460"],
+    "music_style": "lofi",
+    "default_music_volume": 0.12,
+    "stock_video_keywords": ["motivation", "success", "sunrise", "determination", "city skyline"],
+    "stock_video_orientation": "portrait",
+    "stock_video_count": 4,
+    "tags": ["motivation", "urdu", "pakistan", "motivational", "kamyabi", "inspiration", "success"],
+    "description_template": "{title}\n\nAaj ki video mein hum baat karenge {topic} ke baare mein.\n\n#motivation #urdu #pakistan #shorts #kamyabi"
+}

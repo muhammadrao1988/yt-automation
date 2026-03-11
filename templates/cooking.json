@@ -1,0 +1,21 @@
+{
+    "category": "cooking",
+    "format": "long",
+    "resolution": "1920x1080",
+    "duration_range": [180, 480],
+    "subtitle_font_size": 44,
+    "subtitle_font_color": "white",
+    "subtitle_outline_color": "#333333",
+    "thumbnail_font_size": 72,
+    "thumbnail_font_color": "#FF6B35",
+    "thumbnail_outline_color": "white",
+    "font_file": "",
+    "background_gradient": ["#ff9a56", "#ff6b35", "#d4380d"],
+    "music_style": "upbeat",
+    "default_music_volume": 0.10,
+    "stock_video_keywords": ["cooking", "food", "kitchen", "spices", "pakistani food"],
+    "stock_video_orientation": "landscape",
+    "stock_video_count": 6,
+    "tags": ["cooking", "recipe", "urdu", "pakistan", "khana", "desi food", "pakistani recipe"],
+    "description_template": "{title}\n\nAaj hum banaenge {topic}!\n\nIngredients aur recipe neeche mil jayegi.\n\n#cooking #urdu #pakistan #recipe #desifood"
+}

@@ -1,0 +1,21 @@
+{
+    "category": "hot_topics",
+    "format": "shorts",
+    "resolution": "1080x1920",
+    "duration_range": [45, 90],
+    "subtitle_font_size": 48,
+    "subtitle_font_color": "white",
+    "subtitle_outline_color": "#CC0000",
+    "thumbnail_font_size": 76,
+    "thumbnail_font_color": "white",
+    "thumbnail_outline_color": "#CC0000",
+    "font_file": "",
+    "background_gradient": ["#CC0000", "#1a1a1a", "#CC0000"],
+    "music_style": "urgent",
+    "default_music_volume": 0.08,
+    "stock_video_keywords": ["news", "breaking", "pakistan", "city", "crowd"],
+    "stock_video_orientation": "portrait",
+    "stock_video_count": 3,
+    "tags": ["hot topics", "trending", "urdu", "pakistan", "news", "aaj ki khabar", "viral"],
+    "description_template": "{title}\n\n{topic} ke baare mein poori details.\n\n#trending #urdu #pakistan #shorts #hottopics #viral"
+}
