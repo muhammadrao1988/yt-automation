@@ -35,22 +35,22 @@ Save to: `output/cooking/{date}/subtitles.json`
 
 ### 3. GENERATE VOICE
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.tts generate --text-file output/cooking/{date}/script.txt --engine google --output output/cooking/{date}/voice.mp3
+cd ~/Sites/yt-automation && python -m src.tools.tts --text-file output/cooking/{date}/script.txt --engine google --output output/cooking/{date}/voice.mp3
 ```
 
 ### 4. FETCH STOCK VIDEO
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.stock_video download --keywords "cooking,food,spices,kitchen,pakistani food" --count 6 --orientation landscape --output-dir output/cooking/{date}/clips/
+cd ~/Sites/yt-automation && python -m src.tools.stock_video --keywords "cooking,food,spices,kitchen,pakistani food" --count 6 --orientation landscape --output-dir output/cooking/{date}/clips/
 ```
 
 ### 5. ASSEMBLE VIDEO
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.video_maker assemble --clips-dir output/cooking/{date}/clips/ --audio output/cooking/{date}/voice.mp3 --subtitles output/cooking/{date}/subtitles.json --template templates/cooking.json --resolution 1920x1080 --output output/cooking/{date}/final.mp4
+cd ~/Sites/yt-automation && python -m src.tools.video_maker --clips-dir output/cooking/{date}/clips/ --audio output/cooking/{date}/voice.mp3 --subtitles output/cooking/{date}/subtitles.json --template templates/cooking.json --resolution 1920x1080 --output output/cooking/{date}/final.mp4
 ```
 
 ### 6. THUMBNAIL
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.thumbnail create --title "<recipe name>" --template templates/cooking.json --video output/cooking/{date}/final.mp4 --output output/cooking/{date}/thumb.jpg
+cd ~/Sites/yt-automation && python -m src.tools.thumbnail --title "<recipe name>" --template templates/cooking.json --video output/cooking/{date}/final.mp4 --output output/cooking/{date}/thumb.jpg
 ```
 
 ### 7. UPLOAD

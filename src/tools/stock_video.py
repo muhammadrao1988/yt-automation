@@ -5,8 +5,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
 import httpx
 import typer
+
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 app = typer.Typer()
 

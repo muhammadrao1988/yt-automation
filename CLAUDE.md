@@ -15,34 +15,35 @@ All tools are Python CLI scripts. Run from project root (`~/Sites/yt-automation/
 
 ### TTS (Text-to-Speech)
 ```bash
-python -m src.tools.tts generate --text "Aaj hum baat karenge..." --engine google --output output/motivation/2026-03-11/voice.mp3
-python -m src.tools.tts generate --text-file script.txt --engine elevenlabs --output voice.mp3
+python -m src.tools.tts --text "Aaj hum baat karenge..." --engine google --output output/motivation/2026-03-11/voice.mp3
+python -m src.tools.tts --text-file script.txt --engine elevenlabs --output voice.mp3
 ```
 
 ### Stock Video (Pexels)
 ```bash
-python -m src.tools.stock_video download --keywords "motivation,success" --count 3 --orientation portrait --output-dir output/motivation/2026-03-11/clips/
+python -m src.tools.stock_video --keywords "motivation,success" --count 3 --orientation portrait --output-dir output/motivation/2026-03-11/clips/
 ```
 
 ### Video Assembly (FFmpeg)
 ```bash
-python -m src.tools.video_maker assemble \
+python -m src.tools.video_maker \
   --clips-dir output/motivation/2026-03-11/clips/ \
   --audio output/motivation/2026-03-11/voice.mp3 \
   --subtitles output/motivation/2026-03-11/subtitles.json \
-  --template templates/motivation.json \
+  --template-file templates/motivation.json \
   --output output/motivation/2026-03-11/final.mp4
 ```
 
 ### Thumbnail
 ```bash
-python -m src.tools.thumbnail create --title "Kamyabi ka Raaz" --template templates/motivation.json --video output/motivation/2026-03-11/final.mp4 --output output/motivation/2026-03-11/thumb.jpg
+python -m src.tools.thumbnail --title "Kamyabi ka Raaz" --template-file templates/motivation.json --video output/motivation/2026-03-11/final.mp4 --output output/motivation/2026-03-11/thumb.jpg
 ```
 
 ### Upload to YouTube
 ```bash
 python -m src.tools.uploader upload --video final.mp4 --title "Title" --description "..." --tags "tag1,tag2" --thumbnail thumb.jpg --shorts --privacy private
 ```
+Note: uploader has subcommands `upload` and `setup`.
 
 ## Output Structure
 

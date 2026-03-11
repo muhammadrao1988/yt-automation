@@ -37,22 +37,22 @@ Save to: `output/hot_topics/{date}/subtitles.json`
 
 ### 3. GENERATE VOICE
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.tts generate --text-file output/hot_topics/{date}/script.txt --engine google --output output/hot_topics/{date}/voice.mp3
+cd ~/Sites/yt-automation && python -m src.tools.tts --text-file output/hot_topics/{date}/script.txt --engine google --output output/hot_topics/{date}/voice.mp3
 ```
 
 ### 4. FETCH STOCK VIDEO
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.stock_video download --keywords "news,pakistan,city,crowd,breaking" --count 3 --orientation portrait --output-dir output/hot_topics/{date}/clips/
+cd ~/Sites/yt-automation && python -m src.tools.stock_video --keywords "news,pakistan,city,crowd,breaking" --count 3 --orientation portrait --output-dir output/hot_topics/{date}/clips/
 ```
 
 ### 5. ASSEMBLE VIDEO
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.video_maker assemble --clips-dir output/hot_topics/{date}/clips/ --audio output/hot_topics/{date}/voice.mp3 --subtitles output/hot_topics/{date}/subtitles.json --template templates/hot_topics.json --output output/hot_topics/{date}/final.mp4
+cd ~/Sites/yt-automation && python -m src.tools.video_maker --clips-dir output/hot_topics/{date}/clips/ --audio output/hot_topics/{date}/voice.mp3 --subtitles output/hot_topics/{date}/subtitles.json --template templates/hot_topics.json --output output/hot_topics/{date}/final.mp4
 ```
 
 ### 6. THUMBNAIL
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.thumbnail create --title "<headline>" --template templates/hot_topics.json --video output/hot_topics/{date}/final.mp4 --output output/hot_topics/{date}/thumb.jpg
+cd ~/Sites/yt-automation && python -m src.tools.thumbnail --title "<headline>" --template templates/hot_topics.json --video output/hot_topics/{date}/final.mp4 --output output/hot_topics/{date}/thumb.jpg
 ```
 
 ### 7. UPLOAD

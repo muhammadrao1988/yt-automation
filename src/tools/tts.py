@@ -3,7 +3,10 @@
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
 import typer
+
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 app = typer.Typer()
 

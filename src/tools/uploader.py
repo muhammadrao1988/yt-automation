@@ -4,7 +4,10 @@ import json
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
 import typer
+
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -15,7 +18,7 @@ app = typer.Typer()
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 TOKEN_PATH = Path(__file__).resolve().parent.parent.parent / ".youtube_token.json"
-CLIENT_SECRETS_PATH = Path(__file__).resolve().parent.parent.parent / "client_secrets.json"
+CLIENT_SECRETS_PATH = Path(__file__).resolve().parent.parent.parent / "client_secret.json"
 
 
 def get_credentials() -> Credentials:

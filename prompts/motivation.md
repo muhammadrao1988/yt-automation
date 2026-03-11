@@ -34,22 +34,22 @@ Save to: `output/motivation/{date}/subtitles.json`
 
 ### 3. GENERATE VOICE
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.tts generate --text-file output/motivation/{date}/script.txt --engine google --output output/motivation/{date}/voice.mp3
+cd ~/Sites/yt-automation && python -m src.tools.tts --text-file output/motivation/{date}/script.txt --engine google --output output/motivation/{date}/voice.mp3
 ```
 
 ### 4. FETCH STOCK VIDEO
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.stock_video download --keywords "motivation,success,sunrise,determination" --count 4 --orientation portrait --output-dir output/motivation/{date}/clips/
+cd ~/Sites/yt-automation && python -m src.tools.stock_video --keywords "motivation,success,sunrise,determination" --count 4 --orientation portrait --output-dir output/motivation/{date}/clips/
 ```
 
 ### 5. ASSEMBLE VIDEO
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.video_maker assemble --clips-dir output/motivation/{date}/clips/ --audio output/motivation/{date}/voice.mp3 --subtitles output/motivation/{date}/subtitles.json --template templates/motivation.json --output output/motivation/{date}/final.mp4
+cd ~/Sites/yt-automation && python -m src.tools.video_maker --clips-dir output/motivation/{date}/clips/ --audio output/motivation/{date}/voice.mp3 --subtitles output/motivation/{date}/subtitles.json --template templates/motivation.json --output output/motivation/{date}/final.mp4
 ```
 
 ### 6. THUMBNAIL
 ```bash
-cd ~/Sites/yt-automation && python -m src.tools.thumbnail create --title "<your video title>" --template templates/motivation.json --video output/motivation/{date}/final.mp4 --output output/motivation/{date}/thumb.jpg
+cd ~/Sites/yt-automation && python -m src.tools.thumbnail --title "<your video title>" --template templates/motivation.json --video output/motivation/{date}/final.mp4 --output output/motivation/{date}/thumb.jpg
 ```
 
 ### 7. UPLOAD
