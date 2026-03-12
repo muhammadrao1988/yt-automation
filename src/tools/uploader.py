@@ -100,11 +100,14 @@ def upload_video(
     # Set thumbnail if provided
     if thumbnail_path and thumbnail_path.exists():
         typer.echo("Setting custom thumbnail...")
-        youtube.thumbnails().set(
-            videoId=video_id,
-            media_body=MediaFileUpload(str(thumbnail_path)),
-        ).execute()
-        typer.echo("Thumbnail set successfully")
+        try:
+            youtube.thumbnails().set(
+                videoId=video_id,
+                media_body=MediaFileUpload(str(thumbnail_path)),
+            ).execute()
+            typer.echo("Thumbnail set successfully")
+        except Exception as e:
+            typer.echo(f"Warning: could not set thumbnail ({e}). Verify your channel to enable custom thumbnails.", err=True)
 
     return video_id
 

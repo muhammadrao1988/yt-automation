@@ -2,21 +2,19 @@
 
 import json
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
 
 app = typer.Typer()
 
+TARGET_FPS = 30
 
-def get_audio_duration(audio_path: Path) -> float:
-    """Get duration of audio file using ffprobe."""
+
+def get_media_duration(path: Path) -> float:
+    """Get duration of a media file using ffprobe."""
     result = subprocess.run(
-        [
-            "ffprobe", "-v", "quiet", "-print_format", "json",
-            "-show_format", str(audio_path),
-        ],
+        ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", str(path)],
         capture_output=True, text=True,
     )
     data = json.loads(result.stdout)
@@ -47,37 +45,72 @@ def build_subtitle_filter(subtitles_path: Path, template: dict) -> str:
     return ",".join(filters)
 
 
-def concat_clips(clips_dir: Path, target_duration: float, resolution: tuple[int, int]) -> str:
-    """Build FFmpeg filter for concatenating and looping clips to fill duration."""
+def normalize_clips(clips_dir: Path, w: int, h: int) -> list[Path]:
+    """Re-encode all clips to identical format for reliable concatenation."""
     clips = sorted(clips_dir.glob("*.mp4"))
     if not clips:
         typer.echo("Error: no clips found in clips directory", err=True)
         raise typer.Exit(1)
 
-    w, h = resolution
-    inputs = []
-    filter_parts = []
+    norm_dir = clips_dir / "_normalized"
+    norm_dir.mkdir(exist_ok=True)
 
+    normalized = []
     for i, clip in enumerate(clips):
-        inputs.extend(["-i", str(clip)])
-        filter_parts.append(
-            f"[{i}:v]scale={w}:{h}:force_original_aspect_ratio=decrease,"
-            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,"
-            f"setsar=1[v{i}]"
-        )
+        out = norm_dir / f"clip_{i:03d}.ts"
+        if out.exists():
+            normalized.append(out)
+            continue
 
-    # Concatenate all clips
-    n = len(clips)
-    concat_inputs = "".join(f"[v{i}]" for i in range(n))
-    filter_parts.append(f"{concat_inputs}concat=n={n}:v=1:a=0[vconcat]")
+        cmd = [
+            "ffmpeg", "-y", "-i", str(clip.resolve()),
+            "-vf", f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+                   f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,"
+                   f"fps={TARGET_FPS}",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-an",  # strip audio from clips
+            "-f", "mpegts",
+            str(out),
+        ]
+        typer.echo(f"Normalizing clip {i+1}/{len(clips)}: {clip.name}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            typer.echo(f"Warning: failed to normalize {clip.name}: {result.stderr[-200:]}", err=True)
+            continue
+        normalized.append(out)
 
-    # Loop to fill audio duration
-    filter_parts.append(
-        f"[vconcat]loop=loop=-1:size=32767:start=0,"
-        f"trim=duration={target_duration},setpts=PTS-STARTPTS[vout]"
-    )
+    return normalized
 
-    return inputs, ";".join(filter_parts)
+
+def concat_normalized(clips: list[Path], target_duration: float, output: Path) -> None:
+    """Concatenate normalized .ts clips using concat protocol, looping to fill duration."""
+    # Build concat string repeating clips to exceed target duration
+    accumulated = 0.0
+    parts = []
+    durations = [(c, get_media_duration(c)) for c in clips]
+
+    while accumulated < target_duration:
+        for clip, dur in durations:
+            parts.append(str(clip.resolve()))
+            accumulated += dur
+            if accumulated >= target_duration:
+                break
+
+    concat_input = "concat:" + "|".join(parts)
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", concat_input,
+        "-t", str(target_duration),
+        "-c", "copy",
+        "-f", "mpegts",
+        str(output),
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        typer.echo(f"Concat error: {result.stderr[-300:]}", err=True)
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -92,78 +125,83 @@ def assemble(
     resolution: str = typer.Option("1080x1920", help="WxH resolution"),
 ) -> None:
     """Assemble final video from clips, audio, subtitles, and music."""
-    # Parse resolution
     w, h = (int(x) for x in resolution.split("x"))
+    clips_dir = clips_dir.resolve()
+    audio = audio.resolve()
+    output = output.resolve()
 
-    # Load template
     template = {}
     if template_file and template_file.exists():
         template = json.loads(template_file.read_text(encoding="utf-8"))
 
-    # Get audio duration
-    duration = get_audio_duration(audio)
+    duration = get_media_duration(audio)
     typer.echo(f"Audio duration: {duration:.1f}s")
 
-    # Build clip concatenation
-    clip_inputs, clip_filter = concat_clips(clips_dir, duration, (w, h))
+    # Step 1: Normalize all clips to same resolution/fps/codec
+    typer.echo("Step 1: Normalizing clips...")
+    normalized = normalize_clips(clips_dir, w, h)
+    if not normalized:
+        typer.echo("Error: no clips could be normalized", err=True)
+        raise typer.Exit(1)
 
-    # Build subtitle filter
+    # Step 2: Concatenate normalized clips (fast, stream copy)
+    typer.echo("Step 2: Concatenating clips...")
+    concat_output = clips_dir / "_concat.ts"
+    concat_normalized(normalized, duration, concat_output)
+
+    # Step 3: Final assembly — add subtitles + audio + music
+    typer.echo("Step 3: Final assembly...")
+    cmd = ["ffmpeg", "-y"]
+    cmd.extend(["-i", str(concat_output)])  # input 0: concatenated video
+    cmd.extend(["-i", str(audio)])  # input 1: voice-over
+
+    music_idx = None
+    if music and music.exists():
+        cmd.extend(["-i", str(music.resolve())])
+        music_idx = 2
+
+    # Subtitle filter
     sub_filter = ""
     if subtitles and subtitles.exists():
-        sub_filter = build_subtitle_filter(subtitles, template)
+        sub_filter = build_subtitle_filter(subtitles.resolve(), template)
 
-    # Build FFmpeg command
-    cmd = ["ffmpeg", "-y"]
-    cmd.extend(clip_inputs)
-    cmd.extend(["-i", str(audio)])
-
-    audio_input_idx = len([x for x in clip_inputs if x == "-i"])
-
-    # Add music if provided
-    music_input_idx = None
-    if music and music.exists():
-        cmd.extend(["-i", str(music)])
-        music_input_idx = audio_input_idx + 1
-
-    # Build filter complex
-    full_filter = clip_filter
-    if sub_filter:
-        full_filter += f";[vout]{sub_filter}[vfinal]"
-        video_out = "[vfinal]"
-    else:
-        video_out = "[vout]"
-
-    # Audio mixing
-    if music_input_idx is not None:
-        full_filter += (
-            f";[{music_input_idx}:a]volume={music_volume},"
-            f"atrim=duration={duration},asetpts=PTS-STARTPTS[bgm];"
-            f"[{audio_input_idx}:a][bgm]amix=inputs=2:duration=first[aout]"
+    if music_idx is not None:
+        vf = sub_filter if sub_filter else "null"
+        afilter = (
+            f"[{music_idx}:a]volume={music_volume},atrim=duration={duration},"
+            f"asetpts=PTS-STARTPTS[bgm];[1:a][bgm]amix=inputs=2:duration=first[aout]"
         )
-        audio_out = "[aout]"
+        cmd.extend(["-filter_complex", f"[0:v]{vf}[vout];{afilter}"])
+        cmd.extend(["-map", "[vout]", "-map", "[aout]"])
     else:
-        audio_out = f"{audio_input_idx}:a"
+        if sub_filter:
+            cmd.extend(["-vf", sub_filter])
+        cmd.extend(["-map", "0:v", "-map", "1:a"])
 
-    cmd.extend(["-filter_complex", full_filter])
-    cmd.extend(["-map", video_out, "-map", audio_out])
     cmd.extend([
-        "-c:v", "libx264", "-preset", "medium", "-crf", "23",
+        "-t", str(duration),
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
         "-c:a", "aac", "-b:a", "192k",
         "-movflags", "+faststart",
-        "-shortest",
         str(output),
     ])
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    typer.echo(f"Assembling video...")
-    typer.echo(f"Command: {' '.join(cmd)}")
 
     result = subprocess.run(cmd, capture_output=True, text=True)
+
+    # Cleanup temp files
+    for f in (clips_dir / "_normalized").glob("*.ts"):
+        f.unlink(missing_ok=True)
+    (clips_dir / "_normalized").rmdir()
+    concat_output.unlink(missing_ok=True)
+
     if result.returncode != 0:
-        typer.echo(f"FFmpeg error:\n{result.stderr}", err=True)
+        typer.echo(f"FFmpeg error:\n{result.stderr[-500:]}", err=True)
         raise typer.Exit(1)
 
-    typer.echo(f"Video saved to {output}")
+    size_mb = output.stat().st_size / (1024 * 1024)
+    typer.echo(f"Video saved to {output} ({size_mb:.1f} MB)")
 
 
 if __name__ == "__main__":

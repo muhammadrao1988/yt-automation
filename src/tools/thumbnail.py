@@ -135,13 +135,14 @@ def create(
     if template_file and template_file.exists():
         template = json.loads(template_file.read_text(encoding="utf-8"))
 
+    output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
 
     if frame and frame.exists():
-        frame_path = frame
+        frame_path = frame.resolve()
     elif video and video.exists():
         frame_path = output.parent / "_temp_frame.jpg"
-        extract_frame(video, frame_path, timestamp)
+        extract_frame(video.resolve(), frame_path, timestamp)
     else:
         typer.echo("Error: provide --video or --frame", err=True)
         raise typer.Exit(1)
