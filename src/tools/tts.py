@@ -1,5 +1,6 @@
-"""Text-to-Speech tool — Google TTS (free) or ElevenLabs (premium)."""
+"""Text-to-Speech tool — Edge TTS (default), Google TTS, or ElevenLabs."""
 
+import asyncio
 import sys
 from pathlib import Path
 
@@ -9,6 +10,21 @@ import typer
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 app = typer.Typer()
+
+DEFAULT_EDGE_VOICE = "hi-IN-MadhurNeural"
+
+
+def edge_tts_generate(text: str, output: Path, voice: str = DEFAULT_EDGE_VOICE) -> None:
+    """Generate speech using Microsoft Edge TTS (free, no API key, high quality)."""
+    import edge_tts
+
+    async def _generate() -> None:
+        communicate = edge_tts.Communicate(text, voice)
+        await communicate.save(str(output))
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    asyncio.run(_generate())
+    typer.echo(f"Edge TTS ({voice}) saved to {output}")
 
 
 def google_tts(text: str, output: Path, lang: str = "ur") -> None:
@@ -42,13 +58,14 @@ def elevenlabs_tts(text: str, output: Path, api_key: str, voice_id: str) -> None
 def generate(
     text: str = typer.Option(None, help="Text to convert to speech"),
     text_file: Path = typer.Option(None, help="File containing text to convert"),
-    engine: str = typer.Option("google", help="TTS engine: google or elevenlabs"),
+    engine: str = typer.Option("edge", help="TTS engine: edge, google, or elevenlabs"),
+    voice: str = typer.Option(DEFAULT_EDGE_VOICE, help="Edge TTS voice name"),
     lang: str = typer.Option("ur", help="Language code for Google TTS"),
     output: Path = typer.Option(..., help="Output audio file path"),
     api_key: str = typer.Option(None, envvar="ELEVENLABS_API_KEY"),
     voice_id: str = typer.Option("pNInz6obpgDQGcFmaJgB", envvar="ELEVENLABS_VOICE_ID"),
 ) -> None:
-    """Generate speech from text using Google TTS or ElevenLabs."""
+    """Generate speech from text using Edge TTS, Google TTS, or ElevenLabs."""
     if text is None and text_file is None:
         typer.echo("Error: provide --text or --text-file", err=True)
         raise typer.Exit(1)
@@ -64,8 +81,10 @@ def generate(
             typer.echo("Error: ELEVENLABS_API_KEY required for elevenlabs engine", err=True)
             raise typer.Exit(1)
         elevenlabs_tts(content, output, api_key, voice_id)
-    else:
+    elif engine == "google":
         google_tts(content, output, lang)
+    else:
+        edge_tts_generate(content, output, voice)
 
 
 if __name__ == "__main__":
